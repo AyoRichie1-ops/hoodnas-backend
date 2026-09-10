@@ -1,15 +1,8 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 export const sendInvoiceEmail = async (order) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail', // Let Nodemailer handle the host resolution directly
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
-  // Format date: September 10, 2026
   const formattedDate = new Date().toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
@@ -126,12 +119,15 @@ export const sendInvoiceEmail = async (order) => {
     </html>
   `;
 
-  const mailOptions = {
-    from: `"Hoodnas" <${process.env.EMAIL_USER}>`,
-    to: order.customer.email,
+  // Resend testing sender address (works immediately without domain verification)
+  const data = await resend.emails.send({
+    from: 'Hoodnas <onboarding@resend.dev>',
+    to: [order.customer.email],
     subject: `[Hoodnas] Order #${order.orderId} Confirmation`,
     html: htmlContent,
-  };
+  });
 
-  await transporter.sendMail(mailOptions);
+  if (data.error) {
+    throw new Error(data.error.message);
+  }
 };
