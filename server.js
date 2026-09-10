@@ -11,15 +11,14 @@ connectDB();
 const app = express();
 
 const allowedOrigins = [
-  'http://localhost:5173', // Vite default local development
-  'http://localhost:5174', // Vite alternative local port
-  'http://localhost:3000', // React local development
-  process.env.FRONTEND_URL  // Custom domain or primary Vercel URL
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow Postman/curl (no origin), explicitly allowed origins, or ANY .vercel.app deployment
     if (
       !origin || 
       allowedOrigins.includes(origin) || 
@@ -32,9 +31,6 @@ app.use(cors({
   },
   credentials: true
 }));
-
-// Explicitly answer preflight OPTIONS requests before hitting routes
-app.options('*', cors());
 
 app.use(express.json());
 
