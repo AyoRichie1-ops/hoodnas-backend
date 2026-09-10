@@ -33,7 +33,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
+app.get('/', (req, res) => {
+  res.send('Hoodnas Backend Server is Live!');
+});
 app.use('/api/orders', orderRoutes);
 
 const PORT = process.env.PORT || 5000;
