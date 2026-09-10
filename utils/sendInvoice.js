@@ -2,26 +2,20 @@ import nodemailer from 'nodemailer';
 
 export const sendInvoiceEmail = async (order) => {
   const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
+    service: 'gmail', // Let Nodemailer handle the host resolution directly
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-    tls: {
-      rejectUnauthorized: false,
-    },
   });
 
-  // Format date like: September 7, 2026
+  // Format date: September 10, 2026
   const formattedDate = new Date().toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
   });
 
-  // Generate table rows dynamically for ordered items
   const itemRows = order.items
     .map(
       (item) => `
@@ -59,7 +53,6 @@ export const sendInvoiceEmail = async (order) => {
     </head>
     <body>
       <div class="container">
-        <!-- Purple Banner -->
         <div class="header">
           <h1>Thank you for your order</h1>
         </div>
@@ -83,10 +76,8 @@ export const sendInvoiceEmail = async (order) => {
             </ul>
           </div>
 
-          <!-- Order Title -->
           <div class="section-title">[Order #${order.orderId}] (${formattedDate})</div>
 
-          <!-- Items Table -->
           <table>
             <thead>
               <tr>
@@ -100,7 +91,6 @@ export const sendInvoiceEmail = async (order) => {
             </tbody>
           </table>
 
-          <!-- Totals Table -->
           <table class="summary-table" style="margin-top: 20px;">
             <tbody>
               <tr>
@@ -122,7 +112,6 @@ export const sendInvoiceEmail = async (order) => {
             </tbody>
           </table>
 
-          <!-- Billing Address -->
           <div class="section-title">Billing address</div>
           <div class="address-box">
             <strong style="color: #ffffff;">${order.customer.fullName}</strong><br>
