@@ -9,16 +9,16 @@ export const sendInvoiceEmail = async (order) => {
     year: 'numeric',
   });
 
-  // Make sure this points to your hosted logo image URL so email clients render it cleanly
-  const logoUrl = "https://your-live-website.vercel.app/assets/logo2.png"; 
+  // PASTE YOUR PUBLIC IMAGE LINK HERE
+  const logoUrl = "https://hoodnasnigerialimited.vercel.app/logo.png"; 
 
   const itemRows = order.items
     .map(
       (item) => `
       <tr>
-        <td style="padding: 12px; border-bottom: 1px solid #fed7aa; color: #451a03; font-size: 14px;">${item.name}</td>
-        <td style="padding: 12px; border-bottom: 1px solid #fed7aa; color: #451a03; font-size: 14px; text-align: center;">${item.quantity}</td>
-        <td style="padding: 12px; border-bottom: 1px solid #fed7aa; color: #ea580c; font-size: 14px; text-align: right; font-weight: bold;">₦${(item.price * item.quantity).toLocaleString()}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; color: #000000; font-size: 14px;">${item.name}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; color: #000000; font-size: 14px; text-align: center;">${item.quantity}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e5e5e5; color: #000000; font-size: 14px; text-align: right; font-weight: bold;">₦${(item.price * item.quantity).toLocaleString()}</td>
       </tr>
     `
     )
@@ -30,31 +30,30 @@ export const sendInvoiceEmail = async (order) => {
     <head>
       <meta charset="utf-8">
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #fcf9f7; color: #451a03; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #fed7aa; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(120, 53, 15, 0.05); }
-        .header { background-color: #ffffff; text-align: center; padding: 30px 20px 20px 20px; border-bottom: 3px solid #ea580c; }
-        .logo { max-height: 65px; width: auto; margin-bottom: 12px; }
-        .header h1 { margin: 0; color: #ea580c; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background-color: #f9f9f9; color: #000000; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 2px solid #000000; overflow: hidden; }
+        .header { background-color: #000000; text-align: center; padding: 30px 20px; border-bottom: 5px solid #FFC107; }
+        .logo { max-height: 65px; width: auto; margin-bottom: 15px; }
+        .header h1 { margin: 0; color: #FFC107; font-size: 26px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
         .body-content { padding: 30px; }
-        p { line-height: 1.6; color: #582f0e; font-size: 14px; margin-top: 0; }
-        .section-title { color: #ea580c; font-size: 18px; margin-top: 25px; margin-bottom: 12px; font-weight: 800; border-bottom: 1px solid #ffedd5; padding-bottom: 4px; }
-        .bank-box { background-color: #fff7ed; border: 1.5px dashed #ea580c; border-radius: 10px; padding: 18px; margin: 15px 0 20px 0; }
-        .bank-box strong { color: #451a03; font-size: 15px; }
-        .bank-box ul { margin: 8px 0 0 0; padding-left: 20px; color: #78350f; font-size: 14px; }
+        p { line-height: 1.6; color: #000000; font-size: 14px; margin-top: 0; }
+        .section-title { color: #000000; font-size: 18px; margin-top: 25px; margin-bottom: 12px; font-weight: 900; border-bottom: 2px solid #FFC107; padding-bottom: 6px; text-transform: uppercase; }
+        .bank-box { background-color: #ffffff; border: 2px dashed #000000; padding: 18px; margin: 15px 0 20px 0; }
+        .bank-box strong { color: #000000; font-size: 15px; }
+        .bank-box ul { margin: 8px 0 0 0; padding-left: 20px; color: #000000; font-size: 14px; }
         .bank-box li { margin-bottom: 4px; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { background-color: #78350f; color: #ffffff; padding: 12px; text-align: left; font-size: 13px; font-weight: bold; text-transform: uppercase; }
-        .summary-table td { padding: 10px 12px; border-bottom: 1px solid #ffedd5; font-size: 14px; }
-        .address-box { background-color: #fff7ed; border: 1px solid #fed7aa; padding: 16px; margin-top: 15px; border-radius: 8px; line-height: 1.8; color: #78350f; font-size: 14px; }
-        a { color: #ea580c; text-decoration: none; font-weight: bold; }
-        .footer { text-align: center; font-size: 12px; color: #a8a29e; margin-top: 30px; border-top: 1px solid #fed7aa; padding-top: 15px; }
+        th { background-color: #FFC107; color: #000000; padding: 12px; text-align: left; font-size: 13px; font-weight: 900; text-transform: uppercase; border-bottom: 2px solid #000000; }
+        .summary-table td { padding: 10px 12px; border-bottom: 1px solid #e5e5e5; font-size: 14px; color: #000000; }
+        .address-box { background-color: #f9f9f9; border: 1px solid #000000; padding: 16px; margin-top: 15px; line-height: 1.8; color: #000000; font-size: 14px; }
+        a { color: #000000; text-decoration: underline; font-weight: bold; }
+        .footer { text-align: center; font-size: 12px; color: #666666; margin-top: 30px; border-top: 1px solid #e5e5e5; padding-top: 15px; }
       </style>
     </head>
     <body>
       <div class="container">
-        <!-- Logo Header -->
         <div class="header">
-          <img src="${logoUrl}" alt="Hoodnas Nigeria Limited Logo" class="logo" />
+          <img src="${'https://i.ibb.co/G3n8pk3v/logo2.png'}" alt="Hoodnas Nigeria Limited Logo" class="logo" />
           <h1>Order Invoice</h1>
         </div>
 
@@ -63,9 +62,9 @@ export const sendInvoiceEmail = async (order) => {
           <p>Thanks for your order! It is currently on-hold until payment confirmation.</p>
           <p>Please make your bank transfer directly into our account below and send a payment screenshot via WhatsApp for instant processing.</p>
 
-          <p style="background-color: #fff7ed; padding: 12px; border-left: 4px solid #ea580c; font-size: 13px;">
-            <strong>WhatsApp Payment Verification:</strong> +234 901 841 7341<br>
-            <strong>Instagram:</strong> @hoodnas
+          <p style="background-color: #FFC107; padding: 12px; font-size: 13px; color: #000000; font-weight: bold; border: 1px solid #000000;">
+            WhatsApp Verification: +234 901 841 7341<br>
+            Instagram: @hoodnas
           </p>
 
           <div class="section-title">Our Bank Details</div>
@@ -74,7 +73,7 @@ export const sendInvoiceEmail = async (order) => {
             <strong>Hoodnas Nigeria Limited</strong>
             <ul>
               <li><strong>Bank:</strong> Guaranty Trust Bank (GTBank)</li>
-              <li><strong>Account Number:</strong> <span style="color: #ea580c; font-size: 16px; font-weight: bold;">0123456789</span></li>
+              <li><strong>Account Number:</strong> <span style="font-size: 18px; font-weight: 900; background-color: #FFC107; padding: 0 5px;">0123456789</span></li>
             </ul>
           </div>
 
@@ -84,7 +83,7 @@ export const sendInvoiceEmail = async (order) => {
             <thead>
               <tr>
                 <th>Product</th>
-                <th style="text-align: center;">Quantity</th>
+                <th style="text-align: center;">Qty</th>
                 <th style="text-align: right;">Price</th>
               </tr>
             </thead>
@@ -96,27 +95,27 @@ export const sendInvoiceEmail = async (order) => {
           <table class="summary-table" style="margin-top: 15px;">
             <tbody>
               <tr>
-                <td style="color: #78350f; font-weight: bold;">Subtotal:</td>
-                <td style="text-align: right; color: #451a03; font-weight: bold;">₦${order.totalAmount.toLocaleString()}</td>
+                <td style="font-weight: bold;">Subtotal:</td>
+                <td style="text-align: right; font-weight: bold;">₦${order.totalAmount.toLocaleString()}</td>
               </tr>
               <tr>
-                <td style="color: #78350f; font-weight: bold;">Shipping:</td>
-                <td style="text-align: right; color: #78350f;">Shop Pickup / Local Delivery</td>
+                <td style="font-weight: bold;">Shipping:</td>
+                <td style="text-align: right;">Shop Pickup / Local Delivery</td>
               </tr>
               <tr>
-                <td style="color: #78350f; font-weight: bold;">Payment Method:</td>
-                <td style="text-align: right; color: #78350f;">Direct Bank Transfer</td>
+                <td style="font-weight: bold;">Payment Method:</td>
+                <td style="text-align: right;">Direct Bank Transfer</td>
               </tr>
-              <tr style="background-color: #fff7ed;">
-                <td style="color: #ea580c; font-weight: 900; font-size: 16px;">Total:</td>
-                <td style="text-align: right; color: #ea580c; font-weight: 900; font-size: 16px;">₦${order.totalAmount.toLocaleString()}</td>
+              <tr style="background-color: #FFC107; border-top: 2px solid #000000; border-bottom: 2px solid #000000;">
+                <td style="font-weight: 900; font-size: 16px;">Total:</td>
+                <td style="text-align: right; font-weight: 900; font-size: 16px;">₦${order.totalAmount.toLocaleString()}</td>
               </tr>
             </tbody>
           </table>
 
-          <div class="section-title">Delivery & Contact Details</div>
+          <div class="section-title">Delivery & Contact</div>
           <div class="address-box">
-            <strong style="color: #451a03;">${order.customer.fullName}</strong><br>
+            <strong>${order.customer.fullName}</strong><br>
             ${order.customer.address}<br>
             Nigeria<br>
             <a href="tel:${order.customer.phone}">${order.customer.phone}</a><br>
