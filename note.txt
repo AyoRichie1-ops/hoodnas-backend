@@ -149,3 +149,4 @@ Positive observations
 - Email errors are isolated so a provider outage does not automatically discard an
   order; build on this with persistent delivery state/retries.
 
+https://i.ibb.co/G3n8pk3v/logo2.png
