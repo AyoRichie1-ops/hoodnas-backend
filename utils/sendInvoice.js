@@ -76,8 +76,7 @@ export const sendInvoiceEmail = async (order) => {
           <p>Please make your bank transfer directly into our account below and send a payment screenshot via WhatsApp for instant processing.</p>
 
           <p style="background-color: #000000; color: #ffffff; padding: 12px; font-size: 13px; font-weight: bold; border-left: 5px solid #ff6600;">
-            <strong style="color: #ff6600;">WHATSAPP VERIFICATION:</strong> +234 901 841 7341<br>
-            <strong style="color: #ff6600;">INSTAGRAM:</strong> @hoodnas
+            <strong style="color: #ff6600;">WHATSAPP VERIFICATION:</strong> +234 803 328 4246<br>
           </p>
 
           <div class="section-title">Our Bank Details</div>
