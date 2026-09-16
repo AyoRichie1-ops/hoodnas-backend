@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Amaron Hi-Life 65Ah",
+    "sku": "AMA-HL-65-L",
+    "brand": "Amaron",
+    "category": "Automotive",
+    "type": "Dry Cell",
+    "specs": {
+      "ah": "65Ah",
+      "volt": "12V",
+      "terminal": "Left"
+    },
+    "price": 95000,
+    "stock": 20,
+    "image": "https://your-image-host.com/amaron-65ah.jpg",
+    "description": "Reliable maintenance-free battery for passenger vehicles.",
+    "warrantyMonths": 12,
+    "isActive": true
+  }
+]

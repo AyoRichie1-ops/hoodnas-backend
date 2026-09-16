@@ -1,0 +1,151 @@
+CODE REVIEW NOTES — manual-checkout-backend
+Reviewed: 2026-09-16
+
+Summary
+-------
+This is a small, readable checkout API with a sensible first structure (config, model,
+routes, utility). Its main production risks are that a client controls the order price,
+input is essentially unvalidated, invoice HTML is injection-prone, and key operational
+paths have no tests or protection against abuse.
+
+Critical / do first
+------------------
+1. Never calculate an authoritative total from client-supplied item.price.
+   POST /api/orders/checkout accepts arbitrary prices and quantities, so anyone can
+   submit a fraudulent order total (including negative or NaN-like values). Look up
+   products and prices on the server from a product catalogue/database, validate the
+   product IDs and stock, then calculate totals in minor currency units (kobo) using
+   integers or a decimal-money library.
+
+2. Validate and normalize every request before using it.
+   items.reduce throws if items is missing/not an array and customer subfields are only
+   validated later by Mongoose. Add a validation layer (for example Zod/Joi or
+   express-validator): non-empty item list; safe positive integer quantities; known
+   products; valid bounded strings; valid email/phone; maximum payload/item counts.
+   Return 400/422 for bad input rather than 500.
+
+3. Escape customer and product values before embedding them in invoice HTML.
+   Customer name/address/email/phone and item.name are interpolated directly into the
+   email. An attacker can insert HTML, phishing links, or malicious markup. Escape HTML
+   characters or render with a properly escaping template engine. Provide a plain-text
+   email alternative too.
+
+4. Replace the six-digit random order ID.
+   It has only 900,000 possibilities and collisions cause a Mongo duplicate-key error.
+   Use a cryptographically strong UUID/ULID (or a retry-safe sequence), retain the
+   unique index, and translate duplicate-key errors into a graceful response.
+
+5. Do not expose stack/internal database error messages to clients.
+   message: error.message can leak implementation details. Add centralized error
+   middleware that logs full errors server-side and returns stable, safe messages.
+
+Security and abuse protection
+-----------------------------
+6. Add rate limiting and request-size limits to checkout; otherwise it can be used to
+   create unlimited records and trigger unlimited invoice emails. Consider CAPTCHA or
+   an authenticated/admin-assisted checkout flow if appropriate.
+
+7. Add security headers with Helmet, disable Express fingerprinting (app.disable
+   ('x-powered-by')), and use a strict JSON body limit such as 100kb.
+
+8. CORS is too broad for a credentialed API. The .vercel.app rule trusts every Vercel
+   subdomain, including an attacker-owned one. Use an explicit, normalized allowlist
+   from configuration. If cookies are not used, remove credentials: true. Also omit
+   undefined FRONTEND_URL values from the list.
+
+9. Add an idempotency key for checkout submissions. Network retries/double-clicks can
+   create duplicate orders and duplicate emails. Store and replay the original result.
+
+10. Keep secrets out of logs/source control and validate required environment variables
+    at startup (MONGO_URI, RESEND_API_KEY, FRONTEND_URL, company/bank details). The
+    existing .gitignore correctly ignores .env; add a committed .env.example with
+    placeholders and documentation, never real credentials.
+
+Data model and business behaviour
+---------------------------------
+11. Strengthen the schema: make item name/price/quantity required with lower bounds,
+    use subdocument _id: false if not needed, add trim/lowercase/email validation,
+    string length limits, and strict: 'throw' where compatible. Address should be a
+    structured snapshot if shipping/billing matters.
+
+12. Store immutable purchase snapshots: product ID/SKU, product name, unit price,
+    currency, quantity, subtotal, billing/shipping, bank details shown, and order
+    terms. A later catalogue/bank change must not rewrite historical invoices.
+
+13. Define a fuller order lifecycle and who can transition it: pending payment,
+    payment-under-review, paid, fulfilled, cancelled/refunded. Record status history,
+    payment reference/proof, timestamps, and the admin actor. Add admin authorization
+    before exposing status-change endpoints.
+
+14. Bank details, WhatsApp number, brand name, sender address, and country are repeated
+    or hard-coded between route and email. Move them to validated config values so
+    responses and invoices cannot drift.
+
+15. Money formatting currently contains mojibake (â‚¦) in the source/output. Save the
+    file as UTF-8 and use Intl.NumberFormat with NGN; keep money calculations separate
+    from display formatting.
+
+Email reliability
+-----------------
+16. The order is saved even when email fails, which may be acceptable, but the system
+    records neither an email status nor a retry. Persist email state and use a durable
+    background job/queue with retries; do not block checkout on a slow provider once a
+    job system is available.
+
+17. Use a verified production Resend domain instead of onboarding@resend.dev before
+    release. Check the provider response, log its message ID safely, and alert on
+    persistent failures.
+
+18. Generate invoices from a dedicated tested template. Render dates in the store's
+    configured timezone, include support contact/payment deadline, and ensure the email
+    remains readable when styles/dark-mode CSS are stripped.
+
+Server/database operations
+--------------------------
+19. Await database connection before listening, and fail configuration validation before
+    accepting traffic. Configure sensible Mongoose timeouts/pool settings and handle
+    disconnect/reconnect events.
+
+20. Add graceful shutdown: stop accepting requests on SIGTERM/SIGINT, close the HTTP
+    server and Mongoose connection, and exit after a timeout.
+
+21. Add a health endpoint that distinguishes liveness from readiness (including Mongo
+    connection state). Do not expose sensitive diagnostics publicly.
+
+22. Use structured logging with request/order correlation IDs; redact email, phone,
+    address, API keys, and payment information.
+
+Quality, maintainability, and delivery
+--------------------------------------
+23. There are no automated tests: package.json's test script intentionally fails. Add
+    unit tests for pricing/validation/template escaping and integration tests for the
+    checkout route using isolated Mongo and mocked email. Cover invalid payloads, email
+    failure, duplicate IDs, idempotency, and CORS.
+
+24. Add linting/formatting (ESLint + Prettier), a real test script, and CI to run tests,
+    linting, dependency audit, and secret scanning on each change.
+
+25. Add API documentation (OpenAPI/Swagger or README): required environment variables,
+    install/run steps, endpoint contract, response/error formats, payment lifecycle,
+    deployment instructions, and support/runbook guidance.
+
+26. Separate controllers/services/repositories from route definitions as the API grows.
+    Keep routes thin, validation in middleware, pricing/order logic in a service,
+    persistence in a repository, and email delivery behind a mockable interface.
+
+27. Pin and regularly update dependencies. nodemailer is installed but unused; remove it
+    unless planned. I attempted npm audit --omit=dev, but npm did not detect the
+    lockfile from the workspace-level command, so run it inside the project directory
+    in CI (after a clean npm ci) to obtain the actual vulnerability report.
+
+28. Add pagination/authentication to future order-listing endpoints and avoid exposing
+    customer PII. Set a data-retention/deletion policy and restrict database access.
+
+Positive observations
+---------------------
+- Environment variables are already used for Mongo, Resend, port, frontend URL, and
+  WhatsApp configuration.
+- The model has timestamps, a unique order ID, and a basic payment-status enum.
+- Email errors are isolated so a provider outage does not automatically discard an
+  order; build on this with persistent delivery state/retries.
+
