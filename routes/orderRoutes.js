@@ -3,8 +3,43 @@ import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import { sendInvoiceEmail } from '../utils/sendInvoice.js';
+import { JWT } from 'google-auth-library';
+import { GoogleSpreadsheet } from 'google-spreadsheet';
 
 const router = express.Router();
+
+// --- Google Sheets Helper Function ---
+async function appendOrderToGoogleSheet(orderData) {
+  try {
+    const serviceAccountAuth = new JWT({
+      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+
+    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, serviceAccountAuth);
+    await doc.loadInfo();
+    
+    const sheet = doc.sheetsByIndex[0];
+
+    await sheet.addRow({
+      'Order ID': orderData.orderId,
+      'Customer Name': orderData.customerName,
+      'Phone Number': orderData.customerPhone,
+      'Battery Ordered': orderData.itemTitle,
+      'Quantity': orderData.quantity,
+      'Total Amount': orderData.totalAmount,
+      'Delivery Address': orderData.deliveryAddress,
+      'Status': 'Pending',
+      'Date': new Date().toLocaleString('en-NG', { timeZone: 'Africa/Lagos' }),
+    });
+
+    console.log('Success: Order sent to Google Sheet!');
+  } catch (error) {
+    console.error('Failed to write to Google Sheet:', error);
+  }
+}
+// -------------------------------------
 
 router.post('/checkout', async (req, res) => {
   let session;
@@ -53,6 +88,7 @@ router.post('/checkout', async (req, res) => {
       const subtotal = product.price * quantity;
       return { productId: product._id, name: product.name, price: product.price, quantity, subtotal };
     });
+    
     const totalAmount = orderItems.reduce((total, item) => total + item.subtotal, 0);
     const orderId = `ORD-${new mongoose.Types.ObjectId().toString().slice(-10).toUpperCase()}`;
 
@@ -75,6 +111,19 @@ router.post('/checkout', async (req, res) => {
       newOrder = new Order({ orderId, customer, items: orderItems, totalAmount });
       await newOrder.save({ session });
     });
+
+    // --- Fire the Google Sheets Update ---
+    // Note: We don't use 'await' here so it runs in the background without slowing down the customer checkout
+    appendOrderToGoogleSheet({
+      orderId: newOrder.orderId,
+      customerName: newOrder.customer.fullName,
+      customerPhone: newOrder.customer.phone,
+      itemTitle: newOrder.items.map(i => i.name).join(', '), 
+      quantity: newOrder.items.reduce((sum, item) => sum + item.quantity, 0), 
+      totalAmount: newOrder.totalAmount,
+      deliveryAddress: newOrder.customer.address,
+    });
+    // ------------------------------------
 
     // Await email delivery and log any issues directly
     try {
