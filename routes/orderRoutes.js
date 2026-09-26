@@ -6,8 +6,7 @@ import { sendInvoiceEmail } from '../utils/sendInvoice.js';
 
 const router = express.Router();
 
-// --- Telegram Group Notification Helper ---
-// --- Telegram Group Notification Helper ---
+// --- Telegram Group Notification Helper ----
 async function sendTelegramOrderNotification(orderData) {
   try {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -18,6 +17,7 @@ async function sendTelegramOrderNotification(orderData) {
       return;
     }
 
+    // The message format includes the exact items and quantity
     const message = `
 🚨 *NEW HOODNAS ORDER!* 🚨
     
@@ -25,7 +25,10 @@ async function sendTelegramOrderNotification(orderData) {
 *Customer:* ${orderData.customerName}
 *Phone:* ${orderData.customerPhone}
 
-*Total:* ₦${orderData.totalAmount.toLocaleString()}
+*Items Ordered:* ${orderData.itemTitle}
+*Total Quantity:* ${orderData.quantity}
+
+*Total Payable:* ₦${orderData.totalAmount.toLocaleString()}
 
 *Delivery Address:* 
 ${orderData.deliveryAddress}
@@ -44,7 +47,6 @@ ${orderData.deliveryAddress}
     const responseData = await response.json();
 
     if (!response.ok) {
-      // This will expose the exact reason Telegram rejected it
       console.error('Telegram API rejected the message:', responseData);
     } else {
       console.log('Success: Order sent to Telegram staff group!');
@@ -55,7 +57,6 @@ ${orderData.deliveryAddress}
   }
 }
 // ------------------------------------------
-
 router.post('/checkout', async (req, res) => {
   let session;
   try {
