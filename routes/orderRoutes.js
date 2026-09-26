@@ -3,43 +3,58 @@ import mongoose from 'mongoose';
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import { sendInvoiceEmail } from '../utils/sendInvoice.js';
-import { JWT } from 'google-auth-library';
-import { GoogleSpreadsheet } from 'google-spreadsheet';
 
 const router = express.Router();
 
-// --- Google Sheets Helper Function ---
-async function appendOrderToGoogleSheet(orderData) {
+// --- Telegram Group Notification Helper ---
+// --- Telegram Group Notification Helper ---
+async function sendTelegramOrderNotification(orderData) {
   try {
-    const serviceAccountAuth = new JWT({
-      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      key: process.env.GOOGLE_PRIVATE_KEY.replace(/"/g, '').replace(/\\n/g, '\n'),
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
-
-    const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, serviceAccountAuth);
-    await doc.loadInfo();
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
     
-    const sheet = doc.sheetsByIndex[0];
+    if (!botToken || !chatId) {
+      console.error('Telegram credentials are missing in .env file');
+      return;
+    }
 
-    await sheet.addRow({
-      'Order ID': orderData.orderId,
-      'Customer Name': orderData.customerName,
-      'Phone Number': orderData.customerPhone,
-      'Battery Ordered': orderData.itemTitle,
-      'Quantity': orderData.quantity,
-      'Total Amount': orderData.totalAmount,
-      'Delivery Address': orderData.deliveryAddress,
-      'Status': 'Pending',
-      'Date': new Date().toLocaleString('en-NG', { timeZone: 'Africa/Lagos' }),
+    const message = `
+🚨 *NEW HOODNAS ORDER!* 🚨
+    
+*Order ID:* ${orderData.orderId}
+*Customer:* ${orderData.customerName}
+*Phone:* ${orderData.customerPhone}
+
+*Total:* ₦${orderData.totalAmount.toLocaleString()}
+
+*Delivery Address:* 
+${orderData.deliveryAddress}
+`;
+
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'Markdown'
+      })
     });
+    
+    const responseData = await response.json();
 
-    console.log('Success: Order sent to Google Sheet!');
+    if (!response.ok) {
+      // This will expose the exact reason Telegram rejected it
+      console.error('Telegram API rejected the message:', responseData);
+    } else {
+      console.log('Success: Order sent to Telegram staff group!');
+    }
+    
   } catch (error) {
-    console.error('Failed to write to Google Sheet:', error);
+    console.error('Failed to send Telegram notification:', error);
   }
 }
-// -------------------------------------
+// ------------------------------------------
 
 router.post('/checkout', async (req, res) => {
   let session;
@@ -112,9 +127,9 @@ router.post('/checkout', async (req, res) => {
       await newOrder.save({ session });
     });
 
-    // --- Fire the Google Sheets Update ---
+    // --- Fire the Telegram Notification ---
     // Note: We don't use 'await' here so it runs in the background without slowing down the customer checkout
-    appendOrderToGoogleSheet({
+    sendTelegramOrderNotification({
       orderId: newOrder.orderId,
       customerName: newOrder.customer.fullName,
       customerPhone: newOrder.customer.phone,
