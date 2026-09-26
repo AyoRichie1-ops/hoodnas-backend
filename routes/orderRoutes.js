@@ -6,7 +6,7 @@ import { sendInvoiceEmail } from '../utils/sendInvoice.js';
 
 const router = express.Router();
 
-// --- Telegram Group Notification Helper ----
+// --- Telegram Group Notification Helper ---
 async function sendTelegramOrderNotification(orderData) {
   try {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -17,7 +17,6 @@ async function sendTelegramOrderNotification(orderData) {
       return;
     }
 
-    // The message format includes the exact items and quantity
     const message = `
 🚨 *NEW HOODNAS ORDER!* 🚨
     
@@ -25,8 +24,8 @@ async function sendTelegramOrderNotification(orderData) {
 *Customer:* ${orderData.customerName}
 *Phone:* ${orderData.customerPhone}
 
-*Items Ordered:* ${orderData.itemTitle}
-*Total Quantity:* ${orderData.quantity}
+*Items Ordered:*
+${orderData.formattedItems}
 
 *Total Payable:* ₦${orderData.totalAmount.toLocaleString()}
 
@@ -34,7 +33,7 @@ async function sendTelegramOrderNotification(orderData) {
 ${orderData.deliveryAddress}
 `;
 
-    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -44,19 +43,13 @@ ${orderData.deliveryAddress}
       })
     });
     
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      console.error('Telegram API rejected the message:', responseData);
-    } else {
-      console.log('Success: Order sent to Telegram staff group!');
-    }
-    
+    console.log('Success: Order sent to Telegram staff group!');
   } catch (error) {
     console.error('Failed to send Telegram notification:', error);
   }
 }
 // ------------------------------------------
+
 router.post('/checkout', async (req, res) => {
   let session;
   try {
@@ -129,19 +122,17 @@ router.post('/checkout', async (req, res) => {
     });
 
     // --- Fire the Telegram Notification ---
-    // Note: We don't use 'await' here so it runs in the background without slowing down the customer checkout
     sendTelegramOrderNotification({
       orderId: newOrder.orderId,
       customerName: newOrder.customer.fullName,
       customerPhone: newOrder.customer.phone,
-      itemTitle: newOrder.items.map(i => i.name).join(', '), 
-      quantity: newOrder.items.reduce((sum, item) => sum + item.quantity, 0), 
+      // This maps each item to show its name, quantity, and the subtotal for that line
+      formattedItems: newOrder.items.map(i => `▫️ ${i.name} (Qty: ${i.quantity}) - ₦${i.subtotal.toLocaleString()}`).join('\n'), 
       totalAmount: newOrder.totalAmount,
       deliveryAddress: newOrder.customer.address,
     });
     // ------------------------------------
 
-    // Await email delivery and log any issues directly
     try {
       await sendInvoiceEmail(newOrder);
       console.log('Invoice email sent successfully!');
